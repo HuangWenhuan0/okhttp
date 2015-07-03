@@ -32,6 +32,7 @@ import java.io.InputStream;
 import java.net.Authenticator;
 import java.net.CookieManager;
 import java.net.HttpURLConnection;
+import java.net.SocketTimeoutException;
 import java.net.URL;
 import java.util.Arrays;
 import java.util.Collections;
@@ -159,8 +160,8 @@ public abstract class HttpOverSpdyTest {
     connection.setRequestProperty("Content-Length", String.valueOf(postBytes.length));
     connection.setDoOutput(true);
     connection.getOutputStream().write(postBytes); // push bytes into SpdyDataOutputStream.buffer
-    connection.getOutputStream().flush(); // SpdyConnection.writeData subject to write window
-    connection.getOutputStream().close(); // SpdyConnection.writeData empty frame
+    connection.getOutputStream().flush(); // FramedConnection.writeData subject to write window
+    connection.getOutputStream().close(); // FramedConnection.writeData empty frame
     assertContent("ABCDE", connection, Integer.MAX_VALUE);
 
     RecordedRequest request = server.takeRequest();
@@ -307,8 +308,8 @@ public abstract class HttpOverSpdyTest {
     try {
       readAscii(connection.getInputStream(), Integer.MAX_VALUE);
       fail("Should have timed out!");
-    } catch (IOException e){
-      assertEquals("timeout", e.getMessage());
+    } catch (SocketTimeoutException expected) {
+      assertEquals("timeout", expected.getMessage());
     }
   }
 
